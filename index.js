@@ -7,9 +7,6 @@ const {
  * @param {import('probot').Application} app
  */
 module.exports = (app) => {
-  // Your code here
-  app.log("Yay, the app was loaded!");
-
   app.on("pull_request.closed", async (context) => {
     const {
       payload: { pull_request: pr, repository },
