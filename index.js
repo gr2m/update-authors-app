@@ -1,6 +1,4 @@
-const {
-  composeCreatePullRequest,
-} = require("octokit-plugin-create-pull-request");
+const { composeCreatePullRequest } = require("octokit-plugin-create-pull-request");
 
 /**
  * This is the main entrypoint to your Probot app
@@ -8,58 +6,33 @@ const {
  */
 module.exports = (app) => {
   app.on("pull_request.closed", async (context) => {
-    const {
-      payload: { pull_request: pr, repository },
-      log,
-    } = context;
+    const { payload: { pull_request: pr, repository }, log } = context;
 
-    if (!pr.merged) {
-      log.debug(`pull request ignored, because not merged.`);
-      return;
-    }
+    if (!pr.merged) return log.debug(`pull request ignored, because not merged.`);
+    if (pr.user.type === "Bot") return log.debug(`pull request ignored, user is bot.`);
 
-    if (pr.user.type === "Bot") {
-      log.debug(`pull request ignored, user is bot.`);
-      return;
-    }
-
-    const username = pr.user.login;
-
-    return composeCreatePullRequest(context.github, {
+    const response = await composeCreatePullRequest(context.github, {
       owner: repository.owner.login,
       repo: repository.name,
-      title: `Add @${username} to AUTHORS`,
-      body: `Thank you @${username} for your contribution at #${pr.number}`,
+      title: `Add @${pr.user.login} to AUTHORS`,
+      body: `Thank you @${pr.user.login} for your contribution at #${pr.number}`,
       head: `update-authors-${Date.now()}`,
       createWhenEmpty: false,
       changes: {
         files: {
-          AUTHORS: ({ exists, encoding, content }) => {
-            if (!exists) return `We thank our contributors:\n\n@${username}`;
-
+          "AUTHORS": ({ exists, encoding, content }) => {
+            if (!exists) return `We thank our contributors:\n\n@${pr.user.login}`;
             const currentContent = Buffer.from(content, encoding).toString();
-
-            if (new RegExp(`@${username}\n`).test(currentContent)) return null;
-
-            return currentContent.trim() + "\n@" + username + "\n";
+            if (new RegExp(`@${pr.user.login}\n`).test(currentContent)) return null;
+            return currentContent.trim() + "\n@" + pr.user.login + "\n";
           },
         },
         emptyCommit: false,
-        commit: `Add @${username} to AUTHORS`,
+        commit: `Add @${pr.user.login} to AUTHORS`,
       },
     })
-      .then((response) => {
-        if (response === null) {
-          log.debug(
-            `@${username} already listed in AUTHORS, no pull request created.`
-          );
-          return;
-        }
 
-        log.debug(
-          `Pull request adding @${username} created: ${response.data.html_url}`
-        );
-      })
-      .catch(console.error);
+    if (response === null) return log.debug( `@${pr.user.login} already listed in AUTHORS, no pull request created.`);
+    log.debug(`Pull request adding @${pr.user.login} created: ${response.data.html_url}`);
   });
 };
