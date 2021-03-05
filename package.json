@@ -5,7 +5,7 @@
   "description": "GitHub App that creates and updates the AUTHORS file in your repository each time a pull request is merged",
   "author": "Gregor Martynus (https://twitter.com/gr2m)",
   "license": "ISC",
-  "repository": "https://github.com/gr2m/update-authors-app.git",
+  "repository": "github:gr2m/update-authors-app",
   "keywords": [
     "probot",
     "github",
