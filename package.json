@@ -19,7 +19,7 @@
     "probot": "^9.5.3"
   },
   "devDependencies": {
-    "smee-client": "^1.1.0"
+    "smee-client": "^1.2.3"
   },
   "engines": {
     "node": "12.x"
